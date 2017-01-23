@@ -81,7 +81,8 @@ Index.prototype = {
 			});
 			document.querySelector('.loading-mask').style.display = 'none';
 			self.render();
-			self.Man.position.set(-2,-3,-3);
+			self.Man.position.set(-2,-3,-4);
+			self.Man.scale.set(2,2,2);
 			self.Man.rotation.x = -Math.PI/2;
 			self.scene.add(self.Man);
 
