@@ -40,7 +40,7 @@ Index.prototype = {
 		// this.createCube();
 		// 事件绑定
 		this.bindEvent();
-		this.render();
+		// this.render();
 	},
 	initAR() {
 		// 初始化AR视觉控件
@@ -79,7 +79,9 @@ Index.prototype = {
 				}
 
 			});
-			self.Man.position.set(0,0,-3);
+			document.querySelector('.loading-mask').style.display = 'none';
+			self.render();
+			self.Man.position.set(-2,-3,-3);
 			self.Man.rotation.x = -Math.PI/2;
 			self.scene.add(self.Man);
 
@@ -208,7 +210,7 @@ Index.prototype = {
 		// 启动渲染
 		var self = this;
 		var render = function() {
-			// if(!!self.Man)self.Man.rotation.z += 0.01;
+			if(!!self.Man)self.Man.rotation.z += 0.01;
 			self.gaze();
 			self.renderer.render(self.scene,self.camera);
 			self.gaze();
