@@ -3,6 +3,7 @@
 ** date:2016-12-18
 **/
 var Gazing=false,targetMesh;
+var clock = new THREE.Clock();
 function Index() {
 	this.init();
 }
@@ -35,7 +36,8 @@ Index.prototype = {
 		// 初始化AR视觉控件
 		this.initAR();
 		// 创建立方体
-		this.createCube();
+		this.createMan();
+		// this.createCube();
 		// 事件绑定
 		this.bindEvent();
 		this.render();
@@ -57,6 +59,39 @@ Index.prototype = {
 			self.camera.updateProjectionMatrix();
 			self.renderer.setSize(window.innerWidth, window.innerHeight);
 		}, false );
+	},
+	createMan: function() {
+		// body...
+		var self = this;
+		var loader = new THREE.ColladaLoader();
+		loader.load( "./textures/avatar.dae", function ( collada ) {
+			var _self = self;
+			self.Man = collada.scene;
+			self.Man.traverse( function ( child ) {
+
+				if ( child instanceof THREE.SkinnedMesh ) {
+
+					_self.Man.Animation = new THREE.Animation( child, child.geometry.animation );
+					// _self.Man.Animation.stop();
+// animation.stop();
+					// _self.camera.lookAt( child.position );
+
+				}
+
+			});
+			self.Man.position.set(0,0,-3);
+			self.Man.rotation.x = -Math.PI/2;
+			self.scene.add(self.Man);
+
+			// self.MESHLIST.push(self.Man);
+			self.Man.gazeEvent = function() {
+				_self.Man.Animation.play();
+			}
+			self.Man.blurEvent = function() {
+				_self.Man.Animation.stop();
+			}
+
+		});
 	},
 	createCube: function () {
 		// 创建立方体
@@ -86,7 +121,7 @@ Index.prototype = {
                          navigator.mozGetUserMedia;
 
 		if (navigator.getUserMedia) {
-		   navigator.getUserMedia({ audio: true, video: true },
+		   navigator.getUserMedia({ audio: false, video: true },
 		      function(stream) {
             		self.video.src = webkitURL.createObjectURL(stream);
 		      },
@@ -143,28 +178,43 @@ Index.prototype = {
 	gaze: function() { 
 		//创建凝视器
 	    this.raycaster.setFromCamera(this.center, this.camera);
-	    var intersects = this.raycaster.intersectObjects(this.MESHLIST);
+	    var intersects = this.raycaster.intersectObjects(this.scene.children, true);
 	    
 	    if (intersects.length > 0) { //凝视触发
+	    	console.log();
 	    	if(Gazing) return; //只触发一次
 	    	Gazing = true;
 	      	targetMesh = intersects[0].object;
-	      	targetMesh.gazeEvent();
+	      	if(!!targetMesh.gazeEvent) {
+	      		targetMesh.gazeEvent();
+	      	} else {
+	      		targetMesh = this.getParentGroup(targetMesh);
+	      		targetMesh.gazeEvent();
+	      	}
 	    } else{ 
-	    	if(Gazing) targetMesh.blurEvent();
+	    	if(Gazing && targetMesh.blurEvent) targetMesh.blurEvent();
 	    	Gazing = false;
 	    }
+	},
+	getParentGroup: function(mesh) {
+		// body...
+		var getParent = function(mesh) {
+			if(mesh.parent.type === 'Group') return mesh.parent;
+			else return getParent(mesh.parent);
+		}
+		return getParent(mesh);
 	},
 	render: function() {
 		// 启动渲染
 		var self = this;
 		var render = function() {
-			self.Cube.rotation.y += 0.01;
+			// if(!!self.Man)self.Man.rotation.z += 0.01;
 			self.gaze();
 			self.renderer.render(self.scene,self.camera);
 			self.gaze();
 			self.controls.update();
 			requestAnimationFrame(render);
+			THREE.AnimationHandler.update( clock.getDelta() );
 		}
 		render();
 	}
