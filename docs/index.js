@@ -24,7 +24,6 @@ Index.prototype = {
 		// this.renderer.setClearColor(0x000000,0);
 		this.renderer.shadowMapEnabled = true;
 		this.renderer.setPixelRatio(window.devicePixelRatio);
-		this.createVideo();
 		document.querySelector('.main-page').appendChild(this.renderer.domElement);
 
 		// 创建光线
@@ -93,6 +92,7 @@ Index.prototype = {
 			self.Man.blurEvent = function() {
 				_self.Man.Animation.stop();
 			}
+			self.createVideo();
 
 		});
 	},
@@ -122,18 +122,29 @@ Index.prototype = {
         navigator.getUserMedia = navigator.getUserMedia ||
                          navigator.webkitGetUserMedia ||
                          navigator.mozGetUserMedia;
-
-		if (navigator.getUserMedia) {
-		   navigator.getUserMedia({ audio: false, video: true },
-		      function(stream) {
-            		self.video.src = webkitURL.createObjectURL(stream);
-		      },
-		      function(err) {
-		         console.log("The following error occurred: " + err.name);
-		      }
-		   );
-		} else {
-		   console.log("getUserMedia not supported");
+		var exArray = []; //存储设备源ID 
+		if (navigator.getUserMedia) { 
+			MediaStreamTrack.getSources(function (sourceInfos) { 
+				var _self = self;
+		 		for (var i = 0; i != sourceInfos.length; ++i) { 
+		 			var sourceInfo = sourceInfos[i]; 
+		 			//这里会遍历audio,video，所以要加以区分 
+		 			if (sourceInfo.kind === 'video') { 
+		 				exArray.push(sourceInfo.id); 
+		 			} 
+		 		}
+		 		navigator.getUserMedia({ 
+		 			'video': { 
+		 				'optional': [{ 'sourceId': exArray[1] }] //0为前置摄像头，1为后置 
+					},
+		 			'audio':false 
+			 		}, function(stream) {
+	            		_self.video.src = webkitURL.createObjectURL(stream);
+			      	}, function(err) {
+				         console.log("The following error occurred: " + err.name);
+				    }
+		      	); 
+		 	});
 		}
 	},
 	createLight: function() {
